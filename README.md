@@ -16,7 +16,7 @@ Hướng dẫn thao tác đầy đủ nằm trong [`guide_lab.md`](guide_lab.md)
 
 ## Yêu cầu & Quick Start
 
-**Yêu cầu:** Python 3.11 trở lên. Cần **OpenAI API key** để chạy `domain_assistant.py`
+**Yêu cầu:** Python 3.11 trở lên. Cần **Gemini API key** để chạy `domain_assistant.py`
 (Part 3 — sinh 20 actual answers từ RAG thật); phần code core (`template.py`, Part 1–2)
 không cần API key.
 
@@ -25,7 +25,7 @@ python --version                        # xác nhận 3.11+
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 pytest tests/ -v                         # baseline: 42 tests collected, 42 failed
-cp .env.example .env                     # rồi điền OPENAI_API_KEY (chỉ cần cho Part 3)
+cp .env.example .env                     # rồi điền GEMINI_API_KEY (chỉ cần cho Part 3)
 ```
 
 Chi tiết đầy đủ theo hệ điều hành, xử lý lỗi thường gặp: xem [`guide_lab.md`](guide_lab.md) Mục 2 và Mục 15.
@@ -88,20 +88,20 @@ Evaluation tốt phải **lặp lại được**, **so sánh được** và **ch
 
 ### Ba loại evaluation
 
-| Loại | Khi nào | Ví dụ công cụ |
-|---|---|---|
-| Offline | Mỗi release hoặc prompt change | RAGAS, DeepEval, TruLens |
-| Online | Continuous, real traffic | TruLens, Langfuse |
-| Human | High-stakes hoặc cần calibration | Annotation UI, spreadsheet |
+| Loại   | Khi nào                           | Ví dụ công cụ          |
+| ------- | ---------------------------------- | -------------------------- |
+| Offline | Mỗi release hoặc prompt change   | RAGAS, DeepEval, TruLens   |
+| Online  | Continuous, real traffic           | TruLens, Langfuse          |
+| Human   | High-stakes hoặc cần calibration | Annotation UI, spreadsheet |
 
 ### Bốn nhóm metrics
 
-| Nhóm | Metrics |
-|---|---|
-| Task Completion | Binary pass/fail, partial credit |
-| Answer Quality | Accuracy, completeness, coherence |
-| RAG-Specific | Faithfulness, relevance, context recall, context precision |
-| Business | User satisfaction, time saved, cost, adoption |
+| Nhóm           | Metrics                                                    |
+| --------------- | ---------------------------------------------------------- |
+| Task Completion | Binary pass/fail, partial credit                           |
+| Answer Quality  | Accuracy, completeness, coherence                          |
+| RAG-Specific    | Faithfulness, relevance, context recall, context precision |
+| Business        | User satisfaction, time saved, cost, adoption              |
 
 ### RAG metrics pipeline
 
@@ -112,12 +112,12 @@ Question → Retriever → Context → Generator → Answer
           Recall      Precision                Relevance
 ```
 
-| Metric | Câu hỏi cần trả lời | Heuristic trong lab |
-|---|---|---|
-| Faithfulness | Answer có grounded trong gold context không? | `|answer ∩ context| / |answer|` |
-| Relevance | Answer có trả lời đúng question không? | `|answer ∩ question| / |question|` |
-| Completeness | Answer có đủ nội dung expected không? | `|answer ∩ expected| / |expected|` |
-| Context Recall | Retriever có lấy đủ evidence không? | `|expected ∩ union(chunks)| / |expected|` |
+| Metric            | Câu hỏi cần trả lời                             | Heuristic trong lab |
+| ----------------- | ---------------------------------------------------- | ------------------- |
+| Faithfulness      | Answer có grounded trong gold context không?       | `                   |
+| Relevance         | Answer có trả lời đúng question không?         | `                   |
+| Completeness      | Answer có đủ nội dung expected không?           | `                   |
+| Context Recall    | Retriever có lấy đủ evidence không?             | `                   |
 | Context Precision | Chunk relevant có đứng sớm trong ranking không? | Average Precision@K |
 
 Hai retrieval metrics chạy trên `QAPair.retrieved_contexts`, là danh sách
@@ -137,30 +137,30 @@ Best practices gồm randomize order, multiple judges và calibration với huma
 
 ### Golden Dataset Design
 
-| Phân bổ | Mục đích |
-|---|---|
-| 5 Easy | Factual lookup, thường dùng một document |
-| 7 Medium | Kết hợp quy trình hoặc evidence từ 2–3 documents |
-| 5 Hard | Nhiều điều kiện, ngoại lệ, effective date hoặc ambiguity |
-| 3 Adversarial | Out-of-scope, prompt injection, false premise/trap |
+| Phân bổ     | Mục đích                                                     |
+| ------------- | --------------------------------------------------------------- |
+| 5 Easy        | Factual lookup, thường dùng một document                    |
+| 7 Medium      | Kết hợp quy trình hoặc evidence từ 2–3 documents          |
+| 5 Hard        | Nhiều điều kiện, ngoại lệ, effective date hoặc ambiguity |
+| 3 Adversarial | Out-of-scope, prompt injection, false premise/trap              |
 
 ### Failure taxonomy
 
-| Loại | Triệu chứng | Root cause thường gặp |
-|---|---|---|
-| `hallucination` | Answer không grounded | Context hoặc grounding guardrail yếu |
-| `irrelevant` | Không giải quyết question | Prompt/routing sai |
-| `incomplete` | Bỏ sót thông tin quan trọng | Retrieval thiếu hoặc generation thiếu |
-| `off_topic` | Trả lời sai chủ đề | Intent detection sai |
-| `refusal` | Từ chối khi nên trả lời | Guardrail quá chặt |
+| Loại             | Triệu chứng                   | Root cause thường gặp                 |
+| ----------------- | ------------------------------- | ---------------------------------------- |
+| `hallucination` | Answer không grounded          | Context hoặc grounding guardrail yếu   |
+| `irrelevant`    | Không giải quyết question    | Prompt/routing sai                       |
+| `incomplete`    | Bỏ sót thông tin quan trọng | Retrieval thiếu hoặc generation thiếu |
+| `off_topic`     | Trả lời sai chủ đề         | Intent detection sai                     |
+| `refusal`       | Từ chối khi nên trả lời    | Guardrail quá chặt                     |
 
 ### Evaluation frameworks
 
-| Framework | Focus | Phù hợp nhất với |
-|---|---|---|
-| RAGAS | RAG metrics chuẩn hóa | RAG offline evaluation |
-| DeepEval | LLM unit testing, pytest-native | CI/CD assertions |
-| TruLens | Feedback functions và tracing | Online + offline monitoring |
+| Framework | Focus                           | Phù hợp nhất với        |
+| --------- | ------------------------------- | --------------------------- |
+| RAGAS     | RAG metrics chuẩn hóa         | RAG offline evaluation      |
+| DeepEval  | LLM unit testing, pytest-native | CI/CD assertions            |
+| TruLens   | Feedback functions và tracing  | Online + offline monitoring |
 
 ---
 
@@ -254,12 +254,12 @@ Precision trên những result có retrieval scores.
 
 ## Sản phẩm nộp bài
 
-| File | Yêu cầu |
-|---|---|
-| `solution/solution.py` | Hoàn thiện tất cả TODO bắt buộc của evaluation core |
-| `golden_dataset.json` | Đủ 20 QA, đúng schema, distribution và evidence |
-| `exercises.md` | Hoàn thành worksheet, benchmark 3.2 và rubric 3.3 |
-| `reflection.md` | Evaluation report, 3 failures, 5 Whys và regression strategy |
+| File                     | Yêu cầu                                                     |
+| ------------------------ | ------------------------------------------------------------- |
+| `solution/solution.py` | Hoàn thiện tất cả TODO bắt buộc của evaluation core    |
+| `golden_dataset.json`  | Đủ 20 QA, đúng schema, distribution và evidence          |
+| `exercises.md`         | Hoàn thành worksheet, benchmark 3.2 và rubric 3.3          |
+| `reflection.md`        | Evaluation report, 3 failures, 5 Whys và regression strategy |
 
 ---
 
@@ -268,35 +268,35 @@ Precision trên những result có retrieval scores.
 Buổi học diễn ra từ **09:15 đến 13:00**. Hoàn thành bài lab trước **12:00**;
 thời gian 12:00–13:00 dành cho demo và Q&A.
 
-| Thời gian | Hoạt động |
-|---|---|
-| 09:15–09:30 | Tạo môi trường, smoke test và baseline tests |
-| 09:30–09:45 | Part 1 — Warm-up |
-| 09:45–10:40 | Part 2 — Core Coding và checkpoint tests |
-| 10:40–11:35 | Part 3 — Golden Dataset, RAG, benchmark và rubric |
-| 11:35–11:50 | Part 4 — Failure analysis và reflection |
+| Thời gian   | Hoạt động                                              |
+| ------------ | --------------------------------------------------------- |
+| 09:15–09:30 | Tạo môi trường, smoke test và baseline tests         |
+| 09:30–09:45 | Part 1 — Warm-up                                         |
+| 09:45–10:40 | Part 2 — Core Coding và checkpoint tests                |
+| 10:40–11:35 | Part 3 — Golden Dataset, RAG, benchmark và rubric       |
+| 11:35–11:50 | Part 4 — Failure analysis và reflection                 |
 | 11:50–12:00 | Copy solution, chạy kiểm tra cuối và rà deliverables |
-| 12:00–13:00 | Demo và Q&A |
+| 12:00–13:00 | Demo và Q&A                                              |
 
 ---
 
 ## Rubric
 
-| Tiêu chí | Điểm |
-|---|---:|
-| Core coding hoàn chỉnh, toàn bộ required tests pass | 50 |
-| Golden dataset 20 QA đúng schema, stratification và evidence | 15 |
-| LLM-as-a-Judge rubric design rõ ràng, domain-specific | 10 |
-| Benchmark, 5 Whys, failure analysis và improvement log | 15 |
-| Chất lượng code, type hints và regression strategy | 10 |
-| **Tổng** | **100** |
+| Tiêu chí                                                      |        Điểm |
+| --------------------------------------------------------------- | ------------: |
+| Core coding hoàn chỉnh, toàn bộ required tests pass         |            50 |
+| Golden dataset 20 QA đúng schema, stratification và evidence |            15 |
+| LLM-as-a-Judge rubric design rõ ràng, domain-specific         |            10 |
+| Benchmark, 5 Whys, failure analysis và improvement log         |            15 |
+| Chất lượng code, type hints và regression strategy          |            10 |
+| **Tổng**                                                 | **100** |
 
 Bonus không thay thế phần điểm bắt buộc:
 
-| Bonus | Điểm tối đa |
-|---|---:|
-| Exercise 3.4 — so sánh hai evaluation frameworks | +10 |
-| Exercise 3.5 — reranking và phân tích retrieval metrics | +5 |
+| Bonus                                                       | Điểm tối đa |
+| ----------------------------------------------------------- | --------------: |
+| Exercise 3.4 — so sánh hai evaluation frameworks          |             +10 |
+| Exercise 3.5 — reranking và phân tích retrieval metrics |              +5 |
 
 > **Benchmark score không quyết định điểm lab.** LLM output có thể thay đổi theo
 > model và từng lần chạy. Điểm được chấm dựa trên pipeline đúng, dataset có chất
@@ -307,12 +307,12 @@ Bonus không thay thế phần điểm bắt buộc:
 
 ## Checklist trước khi nộp
 
-- [ ] `python validate_golden_dataset.py` báo `PASS`.
-- [ ] Toàn bộ required tests pass.
-- [ ] `golden_dataset.json` đủ 5 Easy + 7 Medium + 5 Hard + 3 Adversarial.
-- [ ] Đã kiểm tra `artifacts/actual_answers.json` sau khi chạy RAG.
-- [ ] Exercise 3.2 có đủ năm metrics và ba cases thấp nhất.
-- [ ] Exercise 3.3 có rubric 1–5 và edge cases.
-- [ ] `reflection.md` có ba 5 Whys analyses và improvement log.
-- [ ] `solution/solution.py` là bản hoàn thiện của `template.py`.
-- [ ] Không commit `.env`, API key hoặc dữ liệu giảng viên cung cấp ngoài repo.
+- [X] `python validate_golden_dataset.py` báo `PASS`.
+- [X] Toàn bộ required tests pass.
+- [X] `golden_dataset.json` đủ 5 Easy + 7 Medium + 5 Hard + 3 Adversarial.
+- [X] Đã kiểm tra `artifacts/actual_answers.json` sau khi chạy RAG.
+- [X] Exercise 3.2 có đủ năm metrics và ba cases thấp nhất.
+- [X] Exercise 3.3 có rubric 1–5 và edge cases.
+- [X] `reflection.md` có ba 5 Whys analyses và improvement log.
+- [X] `solution/solution.py` là bản hoàn thiện của `template.py`.
+- [X] Không commit `.env`, API key hoặc dữ liệu giảng viên cung cấp ngoài repo.
